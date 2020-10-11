@@ -1,0 +1,33 @@
+{
+  "name": "@ryym/apollo-choc",
+  "version": "0.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js",
+  "author": "ryym <ryym.64@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryym/apollo-choc"
+  },
+  "main": "index.js",
+  "typings": "dist/types/index.d.ts",
+  "files": ["dist", "index.js"],
+  "scripts": {
+    "build": "(test -d dist || mkdir dist) && rm -rf dist && npx tsc",
+    "build:w": "npx tsc -w",
+    "lint": "npx eslint --ext js,ts",
+    "lint:all": "yarn lint .",
+    "fmt:check": "npx prettier --check",
+    "fmt:check:all": "npx prettier --check src"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.1.1",
+    "@typescript-eslint/parser": "^4.1.1",
+    "eslint": "^7.9.0",
+    "eslint-config-prettier": "^6.11.0",
+    "prettier": "^2.1.2",
+    "typescript": "^4.0.3"
+  }
+}
