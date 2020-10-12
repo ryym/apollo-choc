@@ -1,3 +1,5 @@
-export * from './mutationTemplate';
+export * from './defineMutation';
+export * from './defineQuery';
 export * from './query';
-export * from './queryTemplate';
+export * from './useMutation';
+export * from './useQuery';
