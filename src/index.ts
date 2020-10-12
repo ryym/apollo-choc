@@ -1,1 +1,3 @@
-export const HelloWorld = 'HelloWorld';
+export * from './mutationTemplate';
+export * from './query';
+export * from './queryTemplate';
