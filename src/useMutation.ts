@@ -1,7 +1,7 @@
 import { GraphQLError, DocumentNode } from 'graphql';
 import { useMutation as useApolloMutation } from '@apollo/client';
 import type * as Apollo from '@apollo/client';
-import { Mutation, MutationTemplate, DependentQuery } from './defineMutation';
+import { Mutation, MutationTemplate, MutationResult, DependentQuery } from './defineMutation';
 
 export class MutationError extends Error {
   readonly name = '[apollo-choc] MutationError';
@@ -19,11 +19,14 @@ export const useMutation = <R, V = null, IP = null>(
 ): [Mutation<R, V, IP>, Apollo.MutationResult<R>] => {
   const [mutate, result] = useApolloMutation(mutation, options);
 
-  const wrappedMutate: any = async (args: V | [V, IP], options = {}) => {
+  const wrappedMutate: any = async (
+    args: V | [V, IP],
+    options = {}
+  ): Promise<MutationResult<R>> => {
     const [variables, invalidationParams] = Array.isArray(args) ? args : [args];
     const { data, errors, extensions } = await mutate({ variables, ...options });
     if (errors != null) {
-      throw new MutationError('MutationError', errors);
+      return [{ errors }, { extensions }];
     }
     if (data == null) {
       throw new Error('Both of data and errors in mutation result are undefined.');
@@ -35,7 +38,7 @@ export const useMutation = <R, V = null, IP = null>(
     // TODO: Enable to await invalidations.
     invalidateCaches(invalidations, result.client, variables, invalidationParams as IP);
 
-    return [data, { extensions }];
+    return [{ errors: undefined, data }, { extensions }];
   };
 
   return [wrappedMutate, result];

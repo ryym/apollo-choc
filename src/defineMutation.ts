@@ -1,4 +1,4 @@
-import { DocumentNode } from 'graphql';
+import { DocumentNode, GraphQLError } from 'graphql';
 import type * as Apollo from '@apollo/client';
 import { Query } from './query';
 
@@ -12,16 +12,22 @@ export type Mutation<R, V, IP> = IP extends undefined
   ? MutationFn<R, V>
   : MutationWithInvalidationFn<R, V, IP>;
 
+export type MutationResult<R> = [MutationCallResult<R>, MutationResultDetails];
+
+export type MutationCallResult<R> =
+  | { readonly errors: undefined; readonly data: R }
+  | { readonly errors: readonly GraphQLError[] };
+
 export type MutationFn<R, V> = (
   variables: V,
   options?: Apollo.MutationFunctionOptions
-) => Promise<[R, MutationResultDetails]>;
+) => Promise<MutationResult<R>>;
 
 export type MutationWithInvalidationFn<R, V, IP> = (
   variables: V,
   invalidationParams: IP,
   options?: Apollo.MutationFunctionOptions
-) => Promise<[R, MutationResultDetails]>;
+) => Promise<MutationResult<R>>;
 
 export interface MutationConfig<IP> {
   __ghost?: IP;
