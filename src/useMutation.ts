@@ -1,17 +1,7 @@
-import { GraphQLError, DocumentNode } from 'graphql';
-import { useMutation as useApolloMutation } from '@apollo/client';
+import { DocumentNode } from 'graphql';
+import { useMutation as useApolloMutation, ApolloError } from '@apollo/client';
 import type * as Apollo from '@apollo/client';
-import { Mutation, MutationTemplate, DependentQuery } from './defineMutation';
-
-export class MutationError extends Error {
-  readonly name = '[apollo-choc] MutationError';
-  readonly graphQLErrors: readonly GraphQLError[];
-
-  constructor(message: string, errors: readonly GraphQLError[]) {
-    super(message);
-    this.graphQLErrors = errors;
-  }
-}
+import { Mutation, MutationTemplate, MutationResult, DependentQuery } from './defineMutation';
 
 export const useMutation = <R, V = null, IP = null>(
   { mutation, invalidations }: MutationTemplate<R, V, IP>,
@@ -19,23 +9,39 @@ export const useMutation = <R, V = null, IP = null>(
 ): [Mutation<R, V, IP>, Apollo.MutationResult<R>] => {
   const [mutate, result] = useApolloMutation(mutation, options);
 
-  const wrappedMutate: any = async (args: V | [V, IP], options = {}) => {
+  const wrappedMutate: any = async (
+    args: V | [V, IP],
+    options = {}
+  ): Promise<MutationResult<R>> => {
     const [variables, invalidationParams] = Array.isArray(args) ? args : [args];
-    const { data, errors, extensions } = await mutate({ variables, ...options });
-    if (errors != null) {
-      throw new MutationError('MutationError', errors);
+
+    let fetchResult: Apollo.FetchResult<R> | null = null;
+    try {
+      fetchResult = await mutate({ variables, ...options });
+    } catch (error: unknown) {
+      if (error instanceof ApolloError) {
+        return { error, data: undefined };
+      }
+      throw error;
     }
-    if (data == null) {
-      throw new Error('Both of data and errors in mutation result are undefined.');
+
+    // FIXME: I don't know when this errors are set so throw it for now.
+    // (Also I don't know what fetchResult.extensions and context are...)
+    if (fetchResult.errors != null) {
+      throw new ApolloError({ graphQLErrors: fetchResult.errors });
+    }
+
+    if (fetchResult.data == null) {
+      throw new Error('[apollo-choc] no error occurs but data does not exist');
     }
     if (result.client == null) {
-      throw new Error('Apollo client does not exist in the result of useMutation');
+      throw new Error('[apollo-choc] Apollo client does not exist in the result of useMutation');
     }
 
     // TODO: Enable to await invalidations.
     invalidateCaches(invalidations, result.client, variables, invalidationParams as IP);
 
-    return [data, { extensions }];
+    return { error: undefined, data: fetchResult.data };
   };
 
   return [wrappedMutate, result];
