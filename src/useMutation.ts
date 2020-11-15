@@ -1,7 +1,7 @@
 import { DocumentNode } from 'graphql';
 import { useMutation as useApolloMutation, ApolloError } from '@apollo/client';
 import type * as Apollo from '@apollo/client';
-import { Mutation, MutationTemplate, MutationResult, DependentQuery } from './defineMutation';
+import { Mutation, MutationTemplate, DependentQuery } from './defineMutation';
 
 export const useMutation = <R, V = null, IP = null>(
   { mutation, invalidations }: MutationTemplate<R, V, IP>,
@@ -9,10 +9,7 @@ export const useMutation = <R, V = null, IP = null>(
 ): [Mutation<R, V, IP>, Apollo.MutationResult<R>] => {
   const [mutate, result] = useApolloMutation(mutation, options);
 
-  const wrappedMutate: any = async (
-    args: V | [V, IP],
-    options = {}
-  ): Promise<MutationResult<R>> => {
+  const wrappedMutate: Mutation<R, V, IP> = async (args, options = {}) => {
     const [variables, invalidationParams] = Array.isArray(args) ? args : [args];
 
     let fetchResult: Apollo.FetchResult<R> | null = null;

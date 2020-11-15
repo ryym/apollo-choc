@@ -8,9 +8,12 @@ export interface MutationResultDetails {
   readonly extensions?: Extensions;
 }
 
-export type Mutation<R, V, IP> = IP extends undefined
-  ? MutationFn<R, V>
-  : MutationWithInvalidationFn<R, V, IP>;
+export type Mutation<R, V, IP> = (
+  variables: MutationArg<V, IP>,
+  options?: Apollo.MutationFunctionOptions
+) => Promise<MutationResult<R>>;
+
+export type MutationArg<V, IP> = IP extends undefined ? V : [V, IP];
 
 export type MutationResult<R> =
   | {
@@ -21,17 +24,6 @@ export type MutationResult<R> =
       readonly error: Apollo.ApolloError;
       readonly data: undefined;
     };
-
-export type MutationFn<R, V> = (
-  variables: V,
-  options?: Apollo.MutationFunctionOptions
-) => Promise<MutationResult<R>>;
-
-export type MutationWithInvalidationFn<R, V, IP> = (
-  variables: V,
-  invalidationParams: IP,
-  options?: Apollo.MutationFunctionOptions
-) => Promise<MutationResult<R>>;
 
 export interface MutationConfig<IP> {
   __ghost?: IP;
